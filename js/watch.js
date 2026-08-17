@@ -1,3 +1,294 @@
-import {supabase} from './supabase-config.js';const app=document.getElementById('app'),id=new URLSearchParams(location.search).get('id');const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function comments(){const b=document.getElementById('comments');const {data,error}=await supabase.from('comments').select('body,created_at,profiles(username)').eq('video_id',id).order('created_at',{ascending:false});if(error){b.textContent=error.message;return}b.innerHTML=data.length?data.map(c=>`<article><strong>${esc(c.profiles?.username||'Unknown')}</strong><p>${esc(c.body)}</p></article><hr>`).join(''):'<p>No comments yet.</p>'}
-(async()=>{if(!id){app.textContent='Missing video ID.';return}const {data:{user}}=await supabase.auth.getUser();const {data:v,error}=await supabase.from('videos').select('*,profiles(username)').eq('id',id).single();if(error||!v){app.textContent='Video not found.';return}if(v.visibility==='private'&&v.uploader_id!==user?.id){app.textContent='This video is private.';return}await supabase.rpc('increment_video_views',{video_id_input:id});const {data:url}=supabase.storage.from('videos').getPublicUrl(v.storage_path);const swf=(v.mime_type||'').includes('shockwave-flash')||v.storage_path.toLowerCase().endsWith('.swf');app.innerHTML=`<h1>${esc(v.title)}</h1><p>Uploaded by: ${esc(v.profiles?.username||'Unknown')}</p><p>Views: ${Number(v.views)+1}</p>${swf?`<a href="ruffle.html?url=${encodeURIComponent(url.publicUrl)}">Play with Ruffle</a>`:`<video controls width="640" src="${esc(url.publicUrl)}"></video>`}<h3>Description</h3><p>${esc(v.description)}</p><hr><h2>Comments</h2><form id="commentForm"><textarea id="comment" required maxlength="2000"></textarea><br><button>Comment</button></form><section id="comments">Loading...</section>`;await comments();document.getElementById('commentForm').addEventListener('submit',async e=>{e.preventDefault();if(!user)return alert('Log in to comment.');const body=document.getElementById('comment').value.trim();const {error}=await supabase.from('comments').insert({video_id:id,user_id:user.id,body});if(error)alert(error.message);else{document.getElementById('comment').value='';comments()}})})();
+import { supabase } from "./supabase-config.js";
+
+const videoId = new URLSearchParams(location.search).get("id");
+
+const esc = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    }[character]));
+
+const $ = id => document.getElementById(id);
+
+
+async function loadComments() {
+
+    const commentsBox = $("comments");
+
+    const { data, error } = await supabase
+        .from("comments")
+        .select("body, created_at, profiles(username, avatar_path)")
+        .eq("video_id", videoId)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        commentsBox.textContent = error.message;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        commentsBox.innerHTML = "<p>No comments yet.</p>";
+        return;
+    }
+
+    commentsBox.innerHTML = data.map(comment => {
+
+        let avatar = "";
+
+        if (comment.profiles?.avatar_path) {
+            avatar = supabase.storage
+                .from("profiles")
+                .getPublicUrl(comment.profiles.avatar_path)
+                .data.publicUrl;
+        }
+
+        return `
+            <article>
+
+                ${
+                    avatar
+                    ? `<img src="${esc(avatar)}" width="40" height="40" alt="Profile picture">`
+                    : ""
+                }
+
+                <strong>
+                    ${esc(comment.profiles?.username || "Unknown")}
+                </strong>
+
+                <p>${esc(comment.body)}</p>
+
+            </article>
+
+            <hr>
+        `;
+
+    }).join("");
+}
+
+
+async function loadRelatedVideos() {
+
+    const box = $("related-videos");
+
+    const { data, error } = await supabase
+        .from("videos")
+        .select("id, title, views, uploader_id, profiles(username)")
+        .eq("visibility", "public")
+        .neq("id", videoId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+    if (error) {
+        box.textContent = error.message;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        box.innerHTML = "<p>No other videos.</p>";
+        return;
+    }
+
+    box.innerHTML = data.map(video => `
+        <article>
+
+            <a href="watch.html?id=${encodeURIComponent(video.id)}">
+                ${esc(video.title)}
+            </a>
+
+            <p>
+                Uploaded by:
+                ${esc(video.profiles?.username || "Unknown")}
+            </p>
+
+            <p>
+                ${Number(video.views)} views
+            </p>
+
+        </article>
+
+        <hr>
+    `).join("");
+}
+
+
+async function main() {
+
+    if (!videoId) {
+        document.body.textContent = "Missing video ID.";
+        return;
+    }
+
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser();
+
+
+    const { data: video, error } = await supabase
+        .from("videos")
+        .select(`
+            *,
+            profiles(
+                username,
+                avatar_path
+            )
+        `)
+        .eq("id", videoId)
+        .single();
+
+
+    if (error || !video) {
+        document.body.textContent = "Video not found.";
+        console.error(error);
+        return;
+    }
+
+
+    if (
+        video.visibility === "private" &&
+        video.uploader_id !== user?.id
+    ) {
+        document.body.textContent = "This video is private.";
+        return;
+    }
+
+
+    await supabase.rpc(
+        "increment_video_views",
+        {
+            video_id_input: videoId
+        }
+    );
+
+
+    const {
+        data: file
+    } = supabase.storage
+        .from("videos")
+        .getPublicUrl(video.storage_path);
+
+
+    $("video-title").textContent = video.title;
+
+    $("description").textContent = video.description || "";
+
+    $("views").textContent =
+        "Views: " + (Number(video.views) + 1);
+
+
+    const username =
+        video.profiles?.username || "Unknown";
+
+
+    $("uploaded-by").textContent = username;
+
+    $("uploader-username").textContent = username;
+
+    $("uploader-username").href =
+        "profile.html?id=" +
+        encodeURIComponent(video.uploader_id);
+
+
+    if (video.profiles?.avatar_path) {
+
+        const avatar =
+            supabase.storage
+                .from("profiles")
+                .getPublicUrl(video.profiles.avatar_path)
+                .data.publicUrl;
+
+        $("uploader-avatar").src = avatar;
+
+    } else {
+
+        $("uploader-avatar").alt =
+            "No profile picture";
+
+    }
+
+
+    const isSwf =
+        (video.mime_type || "").includes("shockwave-flash") ||
+        video.storage_path.toLowerCase().endsWith(".swf");
+
+
+    if (isSwf) {
+
+        const link = document.createElement("a");
+
+        link.href =
+            "ruffle.html?url=" +
+            encodeURIComponent(file.publicUrl);
+
+        link.textContent = "Play with Ruffle";
+
+        $("video-player").appendChild(link);
+
+    } else {
+
+        const player = document.createElement("video");
+
+        player.controls = true;
+        player.width = 640;
+        player.src = file.publicUrl;
+
+        $("video-player").appendChild(player);
+
+    }
+
+
+    await loadComments();
+
+    await loadRelatedVideos();
+
+
+    $("comment-form").addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            if (!user) {
+                alert("Log in to comment.");
+                return;
+            }
+
+            const body =
+                $("comment-text").value.trim();
+
+            if (!body) {
+                return;
+            }
+
+
+            const { error } = await supabase
+                .from("comments")
+                .insert({
+                    video_id: videoId,
+                    user_id: user.id,
+                    body: body
+                });
+
+
+            if (error) {
+
+                alert(error.message);
+                return;
+
+            }
+
+
+            $("comment-text").value = "";
+
+            await loadComments();
+
+        }
+    );
+
+}
+
+
+main();

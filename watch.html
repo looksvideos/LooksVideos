@@ -1,1 +1,66 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Watch</title></head><body><nav><a href="index.html">Home</a> | <a href="upload.html">Upload</a></nav><hr><main id="app">Loading...</main><script type="module" src="js/watch.js"></script></body></html>
+<main>
+
+    <section>
+
+        <div id="video-player">
+        </div>
+
+        <div id="video-info">
+
+            <h1 id="video-title"></h1>
+
+            <button id="like-button">Like</button>
+            <button id="dislike-button">Dislike</button>
+
+            <span id="views"></span>
+
+        </div>
+
+        <hr>
+
+        <div id="uploader">
+
+            <img id="uploader-avatar"
+                 width="50"
+                 height="50"
+                 alt="Profile picture">
+
+            <div>
+                <a id="uploader-username"></a>
+                <p>Uploaded by: <span id="uploaded-by"></span></p>
+            </div>
+
+        </div>
+
+        <div id="description">
+        </div>
+
+        <hr>
+
+        <section id="comments-section">
+
+            <h2>Comments</h2>
+
+            <form id="comment-form">
+                <textarea id="comment-text"></textarea>
+                <button type="submit">Comment</button>
+            </form>
+
+            <div id="comments">
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <aside>
+
+        <h2>Videos</h2>
+
+        <div id="related-videos">
+        </div>
+
+    </aside>
+
+</main>

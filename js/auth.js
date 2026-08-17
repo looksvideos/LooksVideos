@@ -1,0 +1,6 @@
+import {supabase} from './supabase-config.js';
+const msg=document.getElementById('message'); const say=x=>msg.textContent=x;
+document.getElementById('loginForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)return say(error.message);location.href='index.html';});
+document.getElementById('signupForm')?.addEventListener('submit',async e=>{e.preventDefault();const u=username.value.trim();const {data,error}=await supabase.auth.signUp({email:email.value.trim(),password:password.value});if(error)return say(error.message);if(!data.user)return say('Account created. Check your email.');const {error:pe}=await supabase.from('profiles').insert({id:data.user.id,username:u});say(pe?pe.message:'Account created.');});
+document.getElementById('forgotForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.resetPasswordForEmail(email.value.trim(),{redirectTo:location.origin+'/reset-password.html'});say(error?error.message:'If that email exists, a reset link was sent.');});
+document.getElementById('resetForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.updateUser({password:password.value});say(error?error.message:'Password changed.');});

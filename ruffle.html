@@ -10,7 +10,7 @@
 <h1>Ruffle Player</h1>
 
 <div id="player"></div>
-<p id="status">Loading video...</p>
+<p id="status">Loading...</p>
 
 <script>
     window.RufflePlayer = window.RufflePlayer || {};
@@ -18,60 +18,44 @@
 
 <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 
-<script type="module">
-    import { supabase } from "./js/supabase-config.js";
+<script>
+    window.addEventListener("load", function () {
 
-    const params = new URLSearchParams(window.location.search);
-    const videoId = params.get("id");
+        const params = new URLSearchParams(window.location.search);
+        const videoUrl = params.get("url");
 
-    const status = document.getElementById("status");
-    const playerContainer = document.getElementById("player");
+        const status = document.getElementById("status");
+        const container = document.getElementById("player");
 
-    if (!videoId) {
-        status.textContent = "No video ID was provided.";
-    } else {
-        const { data: video, error } = await supabase
-            .from("videos")
-            .select("id, title, storage_path, mime_type, visibility")
-            .eq("id", videoId)
-            .single();
-
-        if (error) {
-            console.error("Supabase error:", error);
-            status.textContent = "Could not load video: " + error.message;
-        } else if (!video) {
-            status.textContent = "Video not found.";
-        } else {
-            const { data: file } = supabase.storage
-                .from("videos")
-                .getPublicUrl(video.storage_path);
-
-            if (!file || !file.publicUrl) {
-                status.textContent = "Could not get the video file URL.";
-            } else {
-                status.textContent = "Loading " + video.title + "...";
-
-                const ruffle = window.RufflePlayer.newest();
-                const player = ruffle.createPlayer();
-
-                player.style.width = "800px";
-                player.style.height = "600px";
-
-                playerContainer.appendChild(player);
-
-                try {
-                    await player.load({
-                        url: file.publicUrl
-                    });
-
-                    status.textContent = "";
-                } catch (err) {
-                    console.error("Ruffle error:", err);
-                    status.textContent = "Ruffle could not load this SWF file.";
-                }
-            }
+        if (!videoUrl) {
+            status.textContent = "No SWF video URL was provided.";
+            return;
         }
-    }
+
+        const ruffle = window.RufflePlayer.newest();
+
+        if (!ruffle) {
+            status.textContent = "Ruffle failed to load.";
+            return;
+        }
+
+        const player = ruffle.createPlayer();
+
+        player.style.width = "800px";
+        player.style.height = "600px";
+
+        container.appendChild(player);
+
+        player.load({
+            url: videoUrl
+        }).then(function () {
+            status.textContent = "";
+        }).catch(function (error) {
+            console.error(error);
+            status.textContent = "Ruffle could not load this SWF file.";
+        });
+
+    });
 </script>
 
 </body>

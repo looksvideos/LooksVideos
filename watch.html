@@ -1,29 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Watch Video</title>
+</head>
+
+<body>
+
 <main>
 
     <section>
 
-        <div id="video-player">
-        </div>
+        <div id="video-player"></div>
 
-        <div id="video-info">
+        <h1 id="video-title"></h1>
 
-            <h1 id="video-title"></h1>
-
+        <div id="video-actions">
             <button id="like-button">Like</button>
+            <span id="like-count">0</span>
+
             <button id="dislike-button">Dislike</button>
+            <span id="dislike-count">0</span>
 
             <span id="views"></span>
-
         </div>
 
         <hr>
 
         <div id="uploader">
 
-            <img id="uploader-avatar"
-                 width="50"
-                 height="50"
-                 alt="Profile picture">
+            <img
+                id="uploader-avatar"
+                width="50"
+                height="50"
+                alt="Profile picture"
+            >
 
             <div>
                 <a id="uploader-username"></a>
@@ -32,8 +43,7 @@
 
         </div>
 
-        <div id="description">
-        </div>
+        <div id="description"></div>
 
         <hr>
 
@@ -42,25 +52,40 @@
             <h2>Comments</h2>
 
             <form id="comment-form">
-                <textarea id="comment-text"></textarea>
+
+                <textarea
+                    id="comment-text"
+                    required
+                    maxlength="2000"
+                ></textarea>
+
+                <br>
+
                 <button type="submit">Comment</button>
+
             </form>
 
             <div id="comments">
+                Loading comments...
             </div>
 
         </section>
 
     </section>
 
-
     <aside>
 
         <h2>Videos</h2>
 
         <div id="related-videos">
+            Loading videos...
         </div>
 
     </aside>
 
 </main>
+
+<script type="module" src="./js/watch.js"></script>
+
+</body>
+</html>

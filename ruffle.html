@@ -22,6 +22,7 @@
 window.addEventListener("load", function () {
 
     const params = new URLSearchParams(window.location.search);
+
     const videoUrl = params.get("url");
 
     const status = document.getElementById("status");
@@ -49,10 +50,15 @@ window.addEventListener("load", function () {
     player.load({
         url: videoUrl
     }).then(function () {
+
         status.textContent = "";
+
     }).catch(function (error) {
-        console.error(error);
+
+        console.error("Ruffle error:", error);
+
         status.textContent = "Ruffle could not load this SWF file.";
+
     });
 
 });

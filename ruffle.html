@@ -19,43 +19,43 @@
 <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 
 <script>
-    window.addEventListener("load", function () {
+window.addEventListener("load", function () {
 
-        const params = new URLSearchParams(window.location.search);
-        const videoUrl = params.get("url");
+    const params = new URLSearchParams(window.location.search);
+    const videoUrl = params.get("url");
 
-        const status = document.getElementById("status");
-        const container = document.getElementById("player");
+    const status = document.getElementById("status");
+    const container = document.getElementById("player");
 
-        if (!videoUrl) {
-            status.textContent = "No SWF video URL was provided.";
-            return;
-        }
+    if (!videoUrl) {
+        status.textContent = "No SWF video URL was provided.";
+        return;
+    }
 
-        const ruffle = window.RufflePlayer.newest();
+    const ruffle = window.RufflePlayer.newest();
 
-        if (!ruffle) {
-            status.textContent = "Ruffle failed to load.";
-            return;
-        }
+    if (!ruffle) {
+        status.textContent = "Ruffle failed to load.";
+        return;
+    }
 
-        const player = ruffle.createPlayer();
+    const player = ruffle.createPlayer();
 
-        player.style.width = "800px";
-        player.style.height = "600px";
+    player.style.width = "800px";
+    player.style.height = "600px";
 
-        container.appendChild(player);
+    container.appendChild(player);
 
-        player.load({
-            url: videoUrl
-        }).then(function () {
-            status.textContent = "";
-        }).catch(function (error) {
-            console.error(error);
-            status.textContent = "Ruffle could not load this SWF file.";
-        });
-
+    player.load({
+        url: videoUrl
+    }).then(function () {
+        status.textContent = "";
+    }).catch(function (error) {
+        console.error(error);
+        status.textContent = "Ruffle could not load this SWF file.";
     });
+
+});
 </script>
 
 </body>
